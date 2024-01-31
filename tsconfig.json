@@ -16,6 +16,32 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
-    "noFallthroughCasesInSwitch": false
+    "noFallthroughCasesInSwitch": false,
+    "paths": {
+      "@shared": [
+        "libs/shared/src"
+      ],
+      "@shared/*": [
+        "libs/shared/src/*"
+      ],
+      "@prisma":[
+        "src/prisma"
+      ],
+      "@prisma/*":[
+        "src/prisma/*"
+      ],
+      "@users/":[
+        "src/users/"
+      ],
+      "@users/*":[
+        "src/users/*"
+      ],
+      "@auth/":[
+        "src/auth/"
+      ],
+      "@auth/*":[
+        "src/auth/*"
+      ],
+    }
   }
 }

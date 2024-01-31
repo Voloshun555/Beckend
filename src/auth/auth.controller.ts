@@ -8,20 +8,25 @@ import {
   Delete,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { CreateAuthDto } from './dto/create-auth.dto';
+import { RegisterDto } from './dto/register.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
+import { LoginDto } from './dto/login.dto';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
-  @Post()
-  create(@Body() createAuthDto: CreateAuthDto) {
-    return this.authService.create(createAuthDto);
+  @Post('register')
+  register(@Body() registerDto: RegisterDto) {
+   
+  }
+  @Post('login')
+  login(@Body() loginDto: LoginDto) {
+   
   }
 
-  @Get()
-  findAll() {
+  @Get('refresh')
+  refreshTokens() {
     return this.authService.findAll();
   }
 
