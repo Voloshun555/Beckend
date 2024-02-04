@@ -10,23 +10,30 @@ import {
   UseInterceptors,
   ClassSerializerInterceptor,
   UseGuards,
+  Req,
+  Query,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { JwtPayload, Tokens } from './interface';
-import { Response } from 'express';
+import { Response, Request } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { Cookie } from '@shared/decorators/cookies.decorator';
 import { UserAgent } from '@shared/decorators/user-agent.decorator';
 import { Public } from '@shared/decorators/public.decorator';
 import { UserResponse } from '@users/responses/user.respons';
+import { GoogleGuard } from './guargs/googgle.guard';
+import { HttpService } from '@nestjs/axios';
+import { map, mergeMap } from 'rxjs';
+import { Provider } from '@prisma/client';
+import { handleTimeoutAndErrors } from '@shared/helpers/timeout-error.helper';
 
 const REFRESH_TOKEN = 'refreshtoken'
 @Public()
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService, private readonly configService: ConfigService) { }
+  constructor(private readonly authService: AuthService, private readonly configService: ConfigService, private readonly httpService: HttpService) { }
 
   @UseInterceptors(ClassSerializerInterceptor)
   @Post('register')
@@ -89,5 +96,25 @@ export class AuthController {
       path: '/',
     })
     res.status(HttpStatus.CREATED).json({ accessToken: tokens.accessToken })
+  }
+
+  @UseGuards(GoogleGuard)
+  @Get('google')
+  googleAuth() { }
+
+  @UseGuards(GoogleGuard)
+  @Get('google/callback')
+  googleAuthCallback(@Req() req: Request, @Res() res: Response) {
+    const token = req.user['accessToken'];
+    return res.redirect(`http://localhost:3000/api/auth/success-google?token=${token}`);
+  }
+
+  @Get('success')
+  success(@Query('token') token: string, @UserAgent() agent: string, @Res() res: Response) {
+    return this.httpService.get(`https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${token}`)
+      .pipe(mergeMap(({ data: { email } }) => this.authService.providerAuth(email, agent, Provider.GOOGLE)),
+        map(data => this.setRefreshTokenCookies(data, res)),
+        handleTimeoutAndErrors(),
+      )
   }
 }

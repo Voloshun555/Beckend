@@ -1,11 +1,10 @@
-import { ConflictException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, HttpException, HttpStatus, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { RegisterDto } from './dto/register.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
 import { UsersService } from '@users/users.service';
 import { LoginDto } from './dto/login.dto';
 import { Tokens } from './interface';
 import { compareSync } from 'bcryptjs';
-import { Token, User } from '@prisma/client';
+import { Provider, Token, User } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '@prisma/prisma.service';
 import { v4 } from 'uuid';
@@ -119,5 +118,27 @@ export class AuthService {
       where: {
       token
     }})
+  }
+
+  async providerAuth(email: string, agent: string, provider: Provider) {
+    const userExists = await this.userService.findOne(email);
+    if (userExists) {
+      const user = await this.userService.save({ email, provider }).catch((err) => {
+        this.logger.error(err);
+        return null;
+      });
+      return this.generateToken(user, agent);
+    }
+    const user = await this.userService.save({ email, provider }).catch((err) => {
+      this.logger.error(err);
+      return null;
+    });
+    if (!user) {
+      throw new HttpException(
+        `Не получилось создать пользователя с email ${email} в Google auth`,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    return this.generateToken(user, agent);
   }
 }
