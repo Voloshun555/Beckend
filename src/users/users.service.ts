@@ -15,16 +15,28 @@ export class UsersService {
     private readonly configService: ConfigService,
   ) { }
 
-  save(user: Partial<User>) {
-    const heshedPassword = this.hashPassword(user.password)
-    return this.prismaService.user.create({
-      data: {
+  async save(user: Partial<User>) {
+    const hashedPassword = user?.password ? this.hashPassword(user.password) : null;
+    const savedUser = await this.prismaService.user.upsert({
+      where: {
         email: user.email,
-        password: heshedPassword,
-        name: user.name,
+      },
+      update: {
+        password: hashedPassword ?? undefined,
+        provider: user?.provider ?? undefined,
+        roles: user?.roles ?? undefined,
+        isBlocked: user?.isBlocked ?? undefined
+      },
+      create: {
+        email: user.email,
+        password: hashedPassword,
+        provider: user?.provider,
         roles: ['USER'],
       },
     });
+    await this.cacheManager.set(savedUser.id, savedUser);
+    await this.cacheManager.set(savedUser.email, savedUser);
+    return savedUser;
   }
   async findOne(idOrEmail: string, isReset = false): Promise<User> {
     if (isReset) {

@@ -109,7 +109,7 @@ export class AuthController {
     return res.redirect(`http://localhost:3000/api/auth/success-google?token=${token}`);
   }
 
-  @Get('success')
+  @Get('success-google')
   success(@Query('token') token: string, @UserAgent() agent: string, @Res() res: Response) {
     return this.httpService.get(`https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${token}`)
       .pipe(mergeMap(({ data: { email } }) => this.authService.providerAuth(email, agent, Provider.GOOGLE)),
