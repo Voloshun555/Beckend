@@ -9,11 +9,12 @@ import {
   HttpStatus,
   UseInterceptors,
   ClassSerializerInterceptor,
+  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import { Tokens } from './interface';
+import { JwtPayload, Tokens } from './interface';
 import { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { Cookie } from '@shared/decorators/cookies.decorator';
