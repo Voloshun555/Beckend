@@ -26,7 +26,7 @@ import { UserResponse } from '@users/responses/user.respons';
 import { GoogleGuard } from './guargs/googgle.guard';
 import { HttpService } from '@nestjs/axios';
 import { map, mergeMap } from 'rxjs';
-import { Prisma, Provider } from '@prisma/client';
+import { Provider, User } from '@prisma/client';
 import { handleTimeoutAndErrors } from '@shared/helpers/timeout-error.helper';
 import { PrismaService } from '@prisma/prisma.service';
 
@@ -38,17 +38,14 @@ export class AuthController {
 
   @UseInterceptors(ClassSerializerInterceptor)
   @Post('register')
-  async register(@Body() registerDto: RegisterDto, @Res() res: Response, @UserAgent() agent: string) {
+  async register(@Body() registerDto: RegisterDto, @UserAgent() agent: string): Promise<{ accessToken: string, data: UserResponse }> {
     const user = await this.authService.register(registerDto);
-
     if (!user) {
       throw new BadRequestException(`Не вдається зареєструвати користувача з даними ${JSON.stringify(registerDto)}`);
     }
-
     const tokens = await this.authService.generateToken(user, agent);
-    this.setRefreshTokenCookies(tokens, res);
-
-    return new UserResponse(user);
+    const data = new UserResponse(user)
+    return { accessToken: tokens.accessToken, data };
   }
   @Post('login')
   async login(@Body() loginDto: LoginDto, @Res() res: Response, @UserAgent() agent: string) {
