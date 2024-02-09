@@ -26,28 +26,33 @@ import { UserResponse } from '@users/responses/user.respons';
 import { GoogleGuard } from './guargs/googgle.guard';
 import { HttpService } from '@nestjs/axios';
 import { map, mergeMap } from 'rxjs';
-import { Provider } from '@prisma/client';
+import { Prisma, Provider } from '@prisma/client';
 import { handleTimeoutAndErrors } from '@shared/helpers/timeout-error.helper';
+import { PrismaService } from '@prisma/prisma.service';
 
 const REFRESH_TOKEN = 'refreshtoken'
 @Public()
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService, private readonly configService: ConfigService, private readonly httpService: HttpService) { }
+  constructor(private readonly authService: AuthService, private readonly configService: ConfigService, private readonly httpService: HttpService, private readonly prismaService: PrismaService) { }
 
   @UseInterceptors(ClassSerializerInterceptor)
   @Post('register')
-  async register(@Body() registerDto: RegisterDto) {
-    const user = await this.authService.register(registerDto)
+  async register(@Body() registerDto: RegisterDto, @Res() res: Response, @UserAgent() agent: string) {
+    const user = await this.authService.register(registerDto);
 
     if (!user) {
-      throw new BadRequestException(`Не получається зарегіструвати користувача з даними ${JSON.stringify(registerDto)}`)
+      throw new BadRequestException(`Не вдається зареєструвати користувача з даними ${JSON.stringify(registerDto)}`);
     }
 
-    return new UserResponse(user)
+    const tokens = await this.authService.generateToken(user, agent);
+    this.setRefreshTokenCookies(tokens, res);
+
+    return new UserResponse(user);
   }
   @Post('login')
   async login(@Body() loginDto: LoginDto, @Res() res: Response, @UserAgent() agent: string) {
+
     const tokens = await this.authService.login(loginDto, agent)
 
     if (!tokens) {

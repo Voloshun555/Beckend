@@ -56,11 +56,12 @@ export class AuthService {
     return this.generateToken(user, agent)
   }
 
-  private async generateToken(user: User, agent: string): Promise<Tokens> {
-    const accessToken = 'Bearer ' + this.jwtService.sign({
+   async generateToken(user: User, agent: string): Promise<Tokens> {
+    const accessToken = this.jwtService.sign({
       id: user.id,
       email: user.email,
-      roles: user.roles
+      roles: user.roles,
+      name: user.name
     })
 
     const refreshToken = await this.getRefreshToken(user.id, agent)

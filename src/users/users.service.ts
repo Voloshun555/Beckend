@@ -15,6 +15,11 @@ export class UsersService {
     private readonly configService: ConfigService,
   ) { }
 
+  async currentUser(user: Partial<User>) {
+    const _user = this.prismaService.user.fields
+    return _user
+  }
+
   async save(user: Partial<User>) {
     const hashedPassword = user?.password ? this.hashPassword(user.password) : null;
     const savedUser = await this.prismaService.user.upsert({
@@ -25,13 +30,16 @@ export class UsersService {
         password: hashedPassword ?? undefined,
         provider: user?.provider ?? undefined,
         roles: user?.roles ?? undefined,
-        isBlocked: user?.isBlocked ?? undefined
+        isBlocked: user?.isBlocked ?? undefined,
+        name: user.name  ?? undefined
+
       },
       create: {
         email: user.email,
         password: hashedPassword,
         provider: user?.provider,
         roles: ['USER'],
+        name: user.name
       },
     });
     await this.cacheManager.set(savedUser.id, savedUser);
@@ -76,4 +84,5 @@ export class UsersService {
   private hashPassword(password: string) {
     return hashSync(password, genSaltSync(10))
   }
+
 }

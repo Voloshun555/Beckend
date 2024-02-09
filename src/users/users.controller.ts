@@ -8,8 +8,7 @@ import { UserResponse } from './responses/user.respons';
 import { CurrentUser } from '@shared/decorators/current-user.decorator';
 import { JwtPayload } from '@auth/interface';
 import { RolesGuard } from '@auth/guargs/role.guard';
-import { Roles } from '@shared/decorators/roles.decorator';
-import { Role, User } from '@prisma/client';
+import {  User } from '@prisma/client';
 
 @Controller('users')
 export class UsersController {
@@ -28,9 +27,8 @@ export class UsersController {
   }
 
   @UseGuards(RolesGuard)
-  @Roles(Role.ADMIN)
   @Get()
-  me(@CurrentUser() user: JwtPayload) {
+ async me(@CurrentUser() user: JwtPayload) {
     return user
   }
 
