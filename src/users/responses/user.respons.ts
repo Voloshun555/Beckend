@@ -1,29 +1,19 @@
 import { $Enums, Provider, User } from "@prisma/client";
 import { Exclude } from "class-transformer";
 
-export class UserResponse implements User{
+export class UserResponse {
     id: string;
     email: string;
     name: string;
-    accessToken: string
-
-    @Exclude()
-    password: string;
-
-    @Exclude()
-    createdAt: Date;
-    
+    accessToken: string;
     updatedAt: Date;
     roles: $Enums.Role[];
 
-    @Exclude()
-    isBlocked: boolean;
-
-    
-    @Exclude()
-    provider: Provider;
-    
     constructor(user: User) {
-        Object.assign(this, user)
+        this.id = user.id;
+        this.email = user.email;
+        this.name = user.name;
+        this.updatedAt = user.updatedAt;
+        this.roles = user.roles;
     }
 }

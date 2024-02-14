@@ -7,7 +7,7 @@ async function bootstrap() {
   app.use(cookieParser())
   app.enableCors();
   app.setGlobalPrefix('api')
-  await app.listen(3005, () => {
+  await app.listen(3006, () => {
     console.log(`App listening on port 3005`)
   })
 }

@@ -1,14 +1,15 @@
 import {
   Body,
   ClassSerializerInterceptor,
-  Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, UseGuards, UseInterceptors
+  Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, Req, UseGuards, UseInterceptors
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UserResponse } from './responses/user.respons';
 import { CurrentUser } from '@shared/decorators/current-user.decorator';
 import { JwtPayload } from '@auth/interface';
 import { RolesGuard } from '@auth/guargs/role.guard';
-import {  User } from '@prisma/client';
+import { UserDto } from './dto/update-user.dto';
+import { Auth } from '@shared/decorators/auth.decorator';
 
 @Controller('users')
 export class UsersController {
@@ -28,14 +29,15 @@ export class UsersController {
 
   @UseGuards(RolesGuard)
   @Get()
- async me(@CurrentUser() user: JwtPayload) {
-    return user
+  @Auth()
+  async profile(@CurrentUser('id') id: string) {
+    return this.userService.getProfile(id)
   }
 
   @UseInterceptors(ClassSerializerInterceptor)
+  @Auth()
   @Put()
-  async updateUser(@Body() body: Partial<User>) {
-    const user = await this.userService.save(body);
-    return new UserResponse(user);
+  async updateUser(@CurrentUser('id') id: string, @Body() dto: UserDto) {
+    return this.userService.update(id, dto)
   }
 }

@@ -7,6 +7,7 @@ import { convertToSecondsUtil } from '@shared/utils/convert-to-seconds.util';
 import { genSaltSync, hashSync } from 'bcryptjs';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Cache } from 'cache-manager';
+import { UserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -27,7 +28,7 @@ export class UsersService {
         email: user.email,
       },
       update: {
-        password: hashedPassword ?? undefined,
+      password: hashedPassword ?? undefined,
         provider: user?.provider ?? undefined,
         roles: user?.roles ?? undefined,
         isBlocked: user?.isBlocked ?? undefined,
@@ -83,6 +84,42 @@ export class UsersService {
 
   private hashPassword(password: string) {
     return hashSync(password, genSaltSync(10))
+  }
+
+  async update(id: string, dto: UserDto) {
+    let data = dto
+
+    if (dto.password) {
+      data = { ...dto, password: this.hashPassword(dto.password) }
+    }
+
+    return this.prismaService.user.update({
+      where: {
+        id
+      },
+      data,
+      select: {
+        name: true,
+        email: true
+      }
+    })
+  }
+
+  getById(id: string) {
+    return this.prismaService.user.findUnique({
+      where: {
+        id
+      }
+    })
+  }
+
+  async getProfile(id: string) {
+    const profile = await this.getById(id)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password, ...rest } = profile
+
+    return {
+      user: rest}
   }
 
 }

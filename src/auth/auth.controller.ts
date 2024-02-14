@@ -28,34 +28,41 @@ import { HttpService } from '@nestjs/axios';
 import { map, mergeMap } from 'rxjs';
 import { Provider, User } from '@prisma/client';
 import { handleTimeoutAndErrors } from '@shared/helpers/timeout-error.helper';
-import { PrismaService } from '@prisma/prisma.service';
+import { UsersService } from '@users/users.service';
 
 const REFRESH_TOKEN = 'refreshtoken'
 @Public()
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService, private readonly configService: ConfigService, private readonly httpService: HttpService, private readonly prismaService: PrismaService) { }
+  constructor(
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService,
+    private readonly httpService: HttpService,
+    private readonly userService: UsersService) { }
 
   @UseInterceptors(ClassSerializerInterceptor)
   @Post('register')
-  async register(@Body() registerDto: RegisterDto, @UserAgent() agent: string): Promise<{ accessToken: string, data: UserResponse }> {
+  async register(@Body() registerDto: RegisterDto, @Res() res: Response, @UserAgent() agent: string) {
     const user = await this.authService.register(registerDto);
     if (!user) {
       throw new BadRequestException(`Не вдається зареєструвати користувача з даними ${JSON.stringify(registerDto)}`);
     }
     const tokens = await this.authService.generateToken(user, agent);
-    const data = new UserResponse(user)
-    return { accessToken: tokens.accessToken, data };
+    this.setRefreshTokenCookies(tokens, res);
+    const data = new UserResponse(user);
+    res.json({ accessToken: tokens.accessToken, data });
   }
   @Post('login')
   async login(@Body() loginDto: LoginDto, @Res() res: Response, @UserAgent() agent: string) {
-
+    const user: User = await this.userService.findOne(loginDto.email) 
     const tokens = await this.authService.login(loginDto, agent)
 
     if (!tokens) {
       throw new BadRequestException(`Не получається увійти з данами ${JSON.stringify(loginDto)}`)
     }
     this.setRefreshTokenCookies(tokens, res)
+    const data = new UserResponse(user);
+    res.json({ accessToken: tokens.accessToken, data })
   }
 
   @Get('logout')
@@ -72,17 +79,14 @@ export class AuthController {
   @Get('refresh-tokens')
   async refreshTokens(@Cookie(REFRESH_TOKEN) refreshToken: string, @Res() res: Response, @UserAgent() agent: string) {
     if (!refreshToken) {
-      throw new UnauthorizedException()
+      throw new UnauthorizedException();
     }
-
-
-    const tokens = await this.authService.refreshTokens(refreshToken, agent)
-
+    const tokens = await this.authService.refreshTokens(refreshToken, agent);
     if (!tokens) {
-      throw new UnauthorizedException()
+      throw new UnauthorizedException();
     }
-    this.setRefreshTokenCookies(tokens, res)
-
+    this.setRefreshTokenCookies(tokens, res);
+    res.status(HttpStatus.CREATED).json({ accessToken: tokens.accessToken });
   }
 
 
@@ -97,7 +101,7 @@ export class AuthController {
       secure: this.configService.get('NODE_ENV', 'development') === 'production',
       path: '/',
     })
-    res.status(HttpStatus.CREATED).json({ accessToken: tokens.accessToken })
+
   }
 
   @UseGuards(GoogleGuard)
