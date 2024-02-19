@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,18 +8,47 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
+  id        String    @id @default(uuid())
+  email     String    @unique
   name      String?
   password  String?
   provider  Provider?
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  avatar    String?
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
   roles     Role[]
-  Token     Token[]
-  isBlocked Boolean @default(false) @map("is_blocked")
+  tokens    Token[]
+  isBlocked Boolean   @default(false) @map("is_blocked")
+  chats     Chat[]
+  messages  Message[]
 
   @@map("users")
+}
+
+model Chat {
+  id        String    @id @default(uuid())
+  name      String
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  ownerId   String    @map("owner_id")
+  users     User[] // Many-to-many relationship with User
+  messages  Message[] // One-to-many relationship with Message
+
+  @@map("chats")
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  content   String
+  sender    User     @relation(fields: [senderId], references: [id])
+  senderId  String   @map("sender_id")
+  imageUrl  String?
+  chat      Chat     @relation(fields: [chatId], references: [id])
+  chatId    String   @map("chat_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("messages")
 }
 
 model Token {
@@ -30,7 +56,8 @@ model Token {
   exp       DateTime
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String
-  userAgent String @map("user_agent")
+  userAgent String   @map("user_agent")
+
   @@map("tokens")
 }
 
@@ -38,6 +65,7 @@ enum Role {
   ADMIN
   USER
 }
+
 enum Provider {
   GOOGLE
 }

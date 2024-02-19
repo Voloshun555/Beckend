@@ -1,19 +1,25 @@
-import { $Enums, Provider, User } from "@prisma/client";
-import { Exclude } from "class-transformer";
+
+import { $Enums, Chat, Message } from "@prisma/client";
+import { UserWithChatsAndMessages } from "@auth/interface";
 
 export class UserResponse {
     id: string;
     email: string;
     name: string;
+    avatar: string
     accessToken: string;
     updatedAt: Date;
     roles: $Enums.Role[];
-
-    constructor(user: User) {
+    chats: Partial<Chat>[];
+    message: Partial<Message>[];
+    constructor(user: UserWithChatsAndMessages) {
         this.id = user.id;
         this.email = user.email;
         this.name = user.name;
         this.updatedAt = user.updatedAt;
         this.roles = user.roles;
+        this.avatar = user.avatar;
+        this.chats = user.chats;
+        this.message = user.messages
     }
 }

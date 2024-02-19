@@ -1,13 +1,15 @@
-import { JwtPayload } from '@auth/interface';
+import { JwtPayload, UserWithChatsAndMessages } from '@auth/interface';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Role, User } from '@prisma/client';
+import {  Role, User } from '@prisma/client';
 import { convertToSecondsUtil } from '@shared/utils/convert-to-seconds.util';
 import { genSaltSync, hashSync } from 'bcryptjs';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Cache } from 'cache-manager';
 import { UserDto } from './dto/update-user.dto';
+
+
 
 @Injectable()
 export class UsersService {
@@ -16,35 +18,51 @@ export class UsersService {
     private readonly configService: ConfigService,
   ) { }
 
-  async currentUser(user: Partial<User>) {
-    const _user = this.prismaService.user.fields
-    return _user
-  }
+  
 
-  async save(user: Partial<User>) {
+  async save(user: UserWithChatsAndMessages) {
     const hashedPassword = user?.password ? this.hashPassword(user.password) : null;
     const savedUser = await this.prismaService.user.upsert({
       where: {
         email: user.email,
       },
       update: {
-      password: hashedPassword ?? undefined,
-        provider: user?.provider ?? undefined,
-        roles: user?.roles ?? undefined,
-        isBlocked: user?.isBlocked ?? undefined,
-        name: user.name  ?? undefined
-
+        password: hashedPassword ? hashedPassword : undefined,
+        provider: user.provider ? user.provider : undefined,
+        roles: user.roles ? user.roles : undefined,
+        isBlocked: user.isBlocked ? user.isBlocked : undefined,
+        name: user.name ? user.name : undefined,
+        avatar: user.avatar ? user.avatar : undefined,
       },
       create: {
         email: user.email,
         password: hashedPassword,
-        provider: user?.provider,
+        provider: user.provider ? user.provider : undefined,
         roles: ['USER'],
-        name: user.name
+        name: user.name ? user.name : undefined,
+        avatar: user.avatar ? user.avatar : undefined,
+        chats: {
+          connectOrCreate: user.chats?.map(chat => ({
+            where: { id: chat.id },
+            create: {
+              id: chat.id,
+              name: chat.name, 
+              createdAt: chat.createdAt, 
+              updatedAt: chat.updatedAt, 
+              ownerId: chat.ownerId
+            }
+          })),
+        },
+      },
+      include: {
+        chats: true,
+        messages: true,
       },
     });
+
     await this.cacheManager.set(savedUser.id, savedUser);
     await this.cacheManager.set(savedUser.email, savedUser);
+
     return savedUser;
   }
   async findOne(idOrEmail: string, isReset = false): Promise<User> {
@@ -100,7 +118,8 @@ export class UsersService {
       data,
       select: {
         name: true,
-        email: true
+        email: true,
+        avatar: true
       }
     })
   }
@@ -109,6 +128,10 @@ export class UsersService {
     return this.prismaService.user.findUnique({
       where: {
         id
+      },
+      include: {
+        chats: true,
+        messages: true
       }
     })
   }
@@ -119,7 +142,7 @@ export class UsersService {
     const { password, ...rest } = profile
 
     return {
-      user: rest}
+      user: rest
+    }
   }
-
 }

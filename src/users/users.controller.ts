@@ -1,7 +1,7 @@
 import {
   Body,
   ClassSerializerInterceptor,
-  Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, Req, UseGuards, UseInterceptors
+  Controller, Delete, Get, Param, ParseUUIDPipe, Put, UseGuards, UseInterceptors
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UserResponse } from './responses/user.respons';

@@ -1,14 +1,19 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import * as cookieParser from 'cookie-parser'
+import * as cookieParser from 'cookie-parser';
+import { join } from 'path';
+import { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  app.use(cookieParser())
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  app.use(cookieParser());
   app.enableCors();
-  app.setGlobalPrefix('api')
+  app.setGlobalPrefix('api');
+
+  app.useStaticAssets(join(__dirname, '..', 'uploads')); 
+
   await app.listen(3006, () => {
-    console.log(`App listening on port 3005`)
-  })
+    console.log(`App listening on port 300`);
+  });
 }
-bootstrap()
+bootstrap();
