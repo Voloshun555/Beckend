@@ -121,4 +121,10 @@ export class AuthService {
     }
     return this.generateToken(user, agent);
   }
+
+
+  isValidAuthHeader(authorization: string) {
+    const token = authorization.split(' ')[1];
+    return this.jwtService.verify(token);
+  }
 }

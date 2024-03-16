@@ -8,7 +8,7 @@ import { genSaltSync, hashSync } from 'bcryptjs';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Cache } from 'cache-manager';
 import { UserDto } from './dto/update-user.dto';
-
+import { faker } from '@faker-js/faker';
 
 
 @Injectable()
@@ -37,10 +37,10 @@ export class UsersService {
       create: {
         email: user.email,
         password: hashedPassword,
-        provider: user.provider ? user.provider : undefined,
+        provider: user.provider,
         roles: ['USER'],
-        name: user.name ? user.name : undefined,
-        avatar: user.avatar ? user.avatar : undefined,
+        name: user.name,
+        avatar: faker.image.avatar(),
         chats: {
           connectOrCreate: user.chats?.map(chat => ({
             where: { id: chat.id },
@@ -144,5 +144,10 @@ export class UsersService {
     return {
       user: rest
     }
+  }
+
+  async getAllUsers(){
+    const users = await this.prismaService.user.findMany();
+    return users;
   }
 }

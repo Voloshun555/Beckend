@@ -1,8 +1,6 @@
 import { Controller, UseGuards, Post, Body, Get, Param, Delete, Request } from '@nestjs/common';
 import { ChatroomService } from './chat.service';
 import { RolesGuard } from '@auth/guargs/role.guard';
-import { CurrentUser } from '@shared/decorators/current-user.decorator';
-import { UsersService } from '@users/users.service';
 
 @Controller('chatrooms')
 export class ChatroomController {
@@ -23,7 +21,6 @@ export class ChatroomController {
       content,
       req.user.id,
     );
-   
     return newMessage;
   }
 
@@ -32,7 +29,6 @@ export class ChatroomController {
   async createChatroom(
     @Body('name') name: string,
     @Request() req: any,
-    @CurrentUser('id') id: string
   ) {
     const createChat = await this.chatroomService.createChatroom(name, req.user.id);
     return createChat 

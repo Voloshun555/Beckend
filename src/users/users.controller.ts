@@ -10,6 +10,7 @@ import { JwtPayload } from '@auth/interface';
 import { RolesGuard } from '@auth/guargs/role.guard';
 import { UserDto } from './dto/update-user.dto';
 import { Auth } from '@shared/decorators/auth.decorator';
+import { User } from '@prisma/client';
 
 @Controller('users')
 export class UsersController {
@@ -39,5 +40,11 @@ export class UsersController {
   @Put()
   async updateUser(@CurrentUser('id') id: string, @Body() dto: UserDto) {
     return this.userService.update(id, dto)
+  }
+
+  @Get('all/users')
+  @Auth()
+  async getAllUsers(): Promise<User[]> {
+    return this.usersService.getAllUsers();
   }
 }

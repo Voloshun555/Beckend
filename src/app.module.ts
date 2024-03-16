@@ -9,14 +9,16 @@ import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from '@auth/guargs/jwt-auth.guard';
 import { MediaModule } from './media/media.module';
 import { ChatModule } from './chat/chat.module';
-import { WebsocketService } from './websocket/websocket.service';
+import { SocketModule } from './socket/socket.module';
+
+
 
 @Module({
-  imports: [UsersModule, AuthModule, PrismaModule, ConfigModule.forRoot({ isGlobal: true }), MediaModule, ChatModule],
+  imports: [UsersModule, AuthModule, PrismaModule, ConfigModule.forRoot({ isGlobal: true }), MediaModule, ChatModule, SocketModule],
   controllers: [AppController],
   providers: [AppService, {
     provide: APP_GUARD,
     useClass: JwtAuthGuard
-  }, WebsocketService],
+  }],
 })
 export class AppModule { }

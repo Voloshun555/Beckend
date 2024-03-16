@@ -2,6 +2,9 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createWriteStream } from 'fs';
 import { PrismaService } from '@prisma/prisma.service';
+import { parse } from 'cookie';
+import { Socket } from 'socket.io';
+import { WsException } from '@nestjs/websockets';
 
 @Injectable()
 export class ChatroomService {
@@ -19,6 +22,9 @@ export class ChatroomService {
   }
 
   async createChatroom(name: string, sub: string) {
+    if (!name) {
+      throw new BadRequestException({ name: 'Name field is required' });
+    }
     const existingChatroom = await this.prisma.chat.findFirst({
       where: {
         name,
@@ -56,7 +62,17 @@ export class ChatroomService {
         },
       },
       include: {
-        users: true,
+        users: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatar: true,
+            createdAt: true,
+            updatedAt: true,
+            roles: true
+          }
+        },
       },
     });
   }
@@ -74,14 +90,34 @@ export class ChatroomService {
           orderBy: {
             createdAt: 'desc',
           },
-        }, // Eager loading users
-
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatar: true,
+            createdAt: true,
+            updatedAt: true,
+          }
+        },
         messages: {
           take: 1,
           orderBy: {
             createdAt: 'desc',
           },
+          include: {
+            sender: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                avatar: true,
+                createdAt: true,
+                updatedAt: true,
+              }
+            }
+          }
         },
+        
       },
     });
   }
@@ -97,16 +133,21 @@ export class ChatroomService {
         senderId: userId,
       },
       include: {
-        chat: {
-          include: {
-            users: true, 
-          },
-        }, 
-        sender: true,
-      },
+        sender: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatar: true,
+            createdAt: true,
+            updatedAt: true,
+          }
+
+        },
+      }
+        
     });
   }
-
   async saveImage(image: {
     createReadStream: () => any;
     filename: string;
@@ -156,6 +197,7 @@ export class ChatroomService {
       where: {
         id: chatroomId,
       },
+      
     });
   }
 
@@ -173,7 +215,6 @@ export class ChatroomService {
 
   async getProfile(id: string) {
     const profile = await this.getById(id)
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...rest } = profile
 
     return {

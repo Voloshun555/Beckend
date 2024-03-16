@@ -13,7 +13,7 @@ async function bootstrap() {
   app.useStaticAssets(join(__dirname, '..', 'uploads')); 
 
   await app.listen(3006, () => {
-    console.log(`App listening on port 300`);
+    console.log(`App listening on port 3006`);
   });
 }
 bootstrap();

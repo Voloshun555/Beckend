@@ -62,6 +62,7 @@ export class AuthController {
     }
     this.setRefreshTokenCookies(tokens, res)
     const data = new UserResponse(user);
+    
     res.json({ accessToken: tokens.accessToken, data })
   }
 
