@@ -42,7 +42,10 @@ export class ChatroomService {
     });
   }
 
-  async addUsersToChatroom(chatroomId: string, userIds: string[]) {
+  async addUsersToChatroom(chatroomId: string, email: string[]) {
+    if (!email || !chatroomId) {
+      throw new BadRequestException(`Missing field ${email} && ${chatroomId}`)
+    }
     const existingChatroom = await this.prisma.chat.findUnique({
       where: {
         id: chatroomId,
@@ -58,7 +61,7 @@ export class ChatroomService {
       },
       data: {
         users: {
-          connect: userIds.map((id) => ({ id: id })),
+          connect: email.map((email) => ({ email: email })),
         },
       },
       include: {

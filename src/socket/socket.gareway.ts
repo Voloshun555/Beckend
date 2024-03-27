@@ -1,21 +1,45 @@
+
 import { OnGatewayConnection, OnGatewayDisconnect, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
-import { Socket } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { SocketService } from './socket.service';
 
 @WebSocketGateway({ cors: true })
 export class MyGateway implements OnGatewayConnection, OnGatewayDisconnect {
     constructor(private readonly socketService: SocketService) { }
-    @WebSocketServer() server: { emit: (arg0: string, arg1: { userId: string; status: boolean; }) => void; };
+    @WebSocketServer()
+    server: Server;
+    private connectedUsers: Set<string> = new Set();
 
     async handleConnection(client: Socket): Promise<void> {
-        const userId = client.handshake.query.userId as string;
+        let userId: string;
+        if (Array.isArray(client.handshake.query.userId)) {
+            userId = client.handshake.query.userId[0];
+        } else {
+            userId = client.handshake.query.userId;
+        }
+        this.connectedUsers.add(userId);
+        this.sendUsersStatus();
+
         await this.socketService.markUserOnline(userId);
-        this.server.emit('onlineStatus', { userId, status: true });
+
     }
 
     async handleDisconnect(client: Socket): Promise<void> {
-        const userId = client.handshake.query.userId as string;
+        let userId: string;
+        if (Array.isArray(client.handshake.query.userId)) {
+            userId = client.handshake.query.userId[0];
+        } else {
+            userId = client.handshake.query.userId;
+        }
+        console.log("userIdDisconnect", userId);
+        this.connectedUsers.delete(userId);
+        this.sendUsersStatus();
         await this.socketService.markUserOffline(userId);
-        this.server.emit('onlineStatus', { userId, status: false });
+
+    }
+
+    private sendUsersStatus() {
+        const usersStatus = Array.from(this.connectedUsers).map(userId => ({ userId, isOnline: true }));
+        this.server.emit('usersStatus', usersStatus);
     }
 }   

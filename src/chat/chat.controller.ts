@@ -37,9 +37,9 @@ export class ChatroomController {
   @Post(':chatroomId/users')
   async addUsersToChatroom(
     @Param('chatroomId') chatroomId: string,
-    @Body('userIds') userIds: string[],
+    @Body('userEmail') email: string[],
   ) {
-    return this.chatroomService.addUsersToChatroom(chatroomId, userIds);
+    return this.chatroomService.addUsersToChatroom(chatroomId, email);
   }
 
   @Get(':userId/chatrooms')
