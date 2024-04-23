@@ -43,6 +43,10 @@ export class ChatroomService {
   }
 
   async addUsersToChatroom(chatroomId: string, email: string[]) {
+    if (!Array.isArray(email)) {
+      email = [email];
+    }
+    
     if (!email || !chatroomId) {
       throw new BadRequestException(`Missing field ${email} && ${chatroomId}`)
     }
@@ -61,7 +65,7 @@ export class ChatroomService {
       },
       data: {
         users: {
-          connect: email.map((email) => ({ email: email })),
+           connect: email.map((email) => ({email: email})),
         },
       },
       include: {

@@ -31,7 +31,6 @@ export class MyGateway implements OnGatewayConnection, OnGatewayDisconnect {
         } else {
             userId = client.handshake.query.userId;
         }
-        console.log("userIdDisconnect", userId);
         this.connectedUsers.delete(userId);
         this.sendUsersStatus();
         await this.socketService.markUserOffline(userId);
